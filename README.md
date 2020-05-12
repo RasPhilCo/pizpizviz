@@ -1,4 +1,4 @@
-# pizpizviz
+# newvue
 
 ## Project setup
 ```
