@@ -1,5 +1,13 @@
 <template>
 <v-app style="background: transparent;">
+    <v-overlay v-if="!selectedFiles.length"
+    absolute="absolute"
+    value="overlay"
+  >
+      Welcome to PizPizViz!<br/>
+      Press the 'Z' key for the<br/>
+      menu to get started.
+  </v-overlay>
   <v-content>
     <v-container
       fluid
@@ -32,22 +40,14 @@
     style="z-index: 9999;"
   >
     <v-col cols=3>
-      <template v-slot:activator="{ on }">
-        <v-btn icon
-          color="#ff7f50"
-          v-on="on"
-        >
-          <v-icon>mdi-dots-vertical</v-icon>
-        </v-btn>
-      </template>
-
-      <v-list>
+      <v-list style="background-color: lightcoral;">
         <v-list-item>
           <v-file-input
+            v-model="selectedFiles"
             placeholder="Upload your pictures"
             multiple
             prepend-icon="mdi-image"
-            color="purple"
+            color="#50dfff"
             id="file-selector"
             @change="fileSelected"
           >
@@ -55,7 +55,7 @@
               <v-chip
                 small
                 label
-                color="primary"
+                color="#ff5088"
               >
                 {{ text }}
               </v-chip>
@@ -67,8 +67,8 @@
           <v-switch
             v-model="multiStacks"
             class="ma-2"
-            label="Multi-stacks"
-            @click="buildStacks"
+            color="#ffba50"
+            label="Display multi-stacks"
           >
           </v-switch>
         </v-list-item>
@@ -79,10 +79,6 @@
 </template>
 
 <style>
-  body, html {
-    height: 100%;
-  }
-
   body {
     background: black;
     position: relative
@@ -92,55 +88,94 @@
     padding: 0px;
   }
 
+  /*  BEGIN STACK 1 */
   #stack1 {
     position: relative;
   }
 
   #stack1 div {
     position: absolute;
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #stack1 img {
+    display: block;
+    max-width:100%;
+    max-height:100%;
   }
 
   #stack1 div:nth-of-type(1) {
-    animation-name: fader;
-    animation-delay: 6s;
-    animation-duration: 1s;
+    animation-name: fadeOut;
+    animation-delay: 3s;
+    animation-duration: 3s;
     z-index: 20;
   }
 
   #stack1 div:nth-of-type(2) {
     z-index: 10;
+    animation-name: fadeIn;
+    animation-delay: 3s;
+    animation-duration: 3s;
+    opacity: 0.0;
   }
 
   #stack1 div:nth-of-type(n+3) {
     display: none;
   }
 
+  /*  BEGIN STACK 2 */
   #stack2 {
     position: relative;
   }
 
-  #stack2 div{
+  #stack2 div {
     position: absolute;
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #stack2 img {
+    display: block;
+    max-width:100%;
+    max-height:100%;
   }
 
   #stack2 div:nth-of-type(1) {
-    animation-name: fader;
-    animation-delay: 7s;
-    animation-duration: 1s;
+    animation-name: fadeOut;
+    animation-delay: 4s;
+    animation-duration: 3s;
     z-index: 20;
   }
 
   #stack2 div:nth-of-type(2) {
     z-index: 10;
+    animation-name: fadeIn;
+    animation-delay: 4s;
+    animation-duration: 3s;
+    opacity: 0.0;
   }
 
   #stack2 div:nth-of-type(n+3) {
     display: none;
   }
 
-  @keyframes fader {
+  /* SHARED */
+
+  @keyframes fadeOut {
     from { opacity: 1.0; }
     to   { opacity: 0.0; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0.0; }
+    to   { opacity: 1.0; }
   }
 
 </style>
@@ -156,7 +191,9 @@ export default {
   },
   mounted() {
     window.addEventListener('keyup', (event) => {
-      if (event.keyCode === 90) {
+      if (event.keyCode === 27) {
+        this.showMenu = false;
+      } else if (event.keyCode === 90) {
         if (this.showMenu) {
           this.showMenu = false;
           return;
@@ -165,37 +202,52 @@ export default {
       }
     });
   },
+  watch: {
+    multiStacks() {
+      setTimeout(() => {
+        this.resetStacks();
+        this.buildStacks();
+      }, 500);
+    },
+  },
   methods: {
     fileSelected(selected) {
       this.selectedFiles = selected;
+      this.resetStacks();
       this.buildStacks();
+    },
+    resetStacks() {
+      // reset stacks
+      const stack1 = document.getElementById('stack1');
+      if (stack1) stack1.innerHTML = '';
+      const stack2 = document.getElementById('stack2');
+      if (stack2) stack2.innerHTML = '';
     },
     buildStacks() {
       const fileUrls = this.selectedFiles.map((f) => URL.createObjectURL(f));
-      // const fileUrls = [
-      //   'https://www.w3schools.com/howto/img_snow_wide.jpg',
-      //   'https://www.w3schools.com/howto/img_mountains_wide.jpg',
-      //   'https://www.w3schools.com/howto/img_band_ny.jpg',
-      //   'https://www.w3schools.com/howto/img_band_la.jpg',
-      // ];
       const imageSets = {};
       const numOfStacks = this.multiStacks ? 2 : 1;
       this.chunkArray(this.shuffle(fileUrls), (fileUrls.length / numOfStacks))
         .forEach((s, idx) => { imageSets[idx + 1] = s; });
+
+      console.dir('Audit stacks...');
+      console.dir(`Num of stacks: ${Object.keys(imageSets).length}`);
 
       function manipulateDomForStack(id) {
         const stack = document.getElementById(`stack${id}`);
         imageSets[id].forEach((imgSrc) => {
           const domImg = document.createElement('img');
           domImg.src = imgSrc;
-          domImg.style['max-width'] = '100%';
-          domImg.style.height = 'auto';
+          // domImg.style['max-width'] = '100%';
+          // domImg.style.height = 'auto';
           const domDiv = document.createElement('div');
           domDiv.appendChild(domImg);
           stack.appendChild(domDiv);
         });
         const { children } = stack;
-        const fadeComplete = () => { stack.appendChild(children[0]); };
+        const fadeComplete = (e) => {
+          if (e.animationName === 'fadeOut') stack.appendChild(children[0]);
+        };
         for (let i = 0; i < children.length; i += 1) {
           children[i].addEventListener('animationend', fadeComplete, false);
         }
