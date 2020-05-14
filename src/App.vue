@@ -72,6 +72,28 @@
           >
           </v-switch>
         </v-list-item>
+
+        <v-list-item>
+          <v-text-field
+            v-model="pictureDuration"
+            class="ma-2"
+            color="#ffba50"
+            label="Duration (seconds)"
+          >
+            <v-icon slot="prepend" color="#ffba50">mdi-clock</v-icon>
+          </v-text-field>
+        </v-list-item>
+
+        <v-list-item>
+          <v-text-field
+            v-model="transitionSpeed"
+            class="ma-2"
+            color="#ffba50"
+            label="Transition (seconds)"
+          >
+            <v-icon slot="prepend" color="#ffba50">mdi-clock</v-icon>
+          </v-text-field>
+        </v-list-item>
       </v-list>
     </v-col>
   </v-row>
@@ -110,7 +132,7 @@
 
   #stack1 div:nth-of-type(1) {
     animation-name: fadeOut;
-    animation-delay: 3s;
+    animation-delay: 6s;
     animation-duration: 3s;
     z-index: 20;
   }
@@ -118,7 +140,7 @@
   #stack1 div:nth-of-type(2) {
     z-index: 10;
     animation-name: fadeIn;
-    animation-delay: 3s;
+    animation-delay: 6s;
     animation-duration: 3s;
     opacity: 0.0;
   }
@@ -149,7 +171,7 @@
 
   #stack2 div:nth-of-type(1) {
     animation-name: fadeOut;
-    animation-delay: 4s;
+    animation-delay: 7s;
     animation-duration: 3s;
     z-index: 20;
   }
@@ -157,7 +179,7 @@
   #stack2 div:nth-of-type(2) {
     z-index: 10;
     animation-name: fadeIn;
-    animation-delay: 4s;
+    animation-delay: 7s;
     animation-duration: 3s;
     opacity: 0.0;
   }
@@ -186,6 +208,8 @@ export default {
     showMenu: false,
     selectedFiles: [],
     multiStacks: false,
+    pictureDuration: 10,
+    transitionSpeed: 3,
   }),
   computed: {
   },
@@ -204,6 +228,18 @@ export default {
   },
   watch: {
     multiStacks() {
+      setTimeout(() => {
+        this.resetStacks();
+        this.buildStacks();
+      }, 500);
+    },
+    pictureDuration() {
+      setTimeout(() => {
+        this.resetStacks();
+        this.buildStacks();
+      }, 500);
+    },
+    transitionSpeed() {
       setTimeout(() => {
         this.resetStacks();
         this.buildStacks();
@@ -233,14 +269,13 @@ export default {
       console.dir('Audit stacks...');
       console.dir(`Num of stacks: ${Object.keys(imageSets).length}`);
 
-      function manipulateDomForStack(id) {
+      function manipulateDomForStack(id, delay, speed) {
         const stack = document.getElementById(`stack${id}`);
         imageSets[id].forEach((imgSrc) => {
           const domImg = document.createElement('img');
           domImg.src = imgSrc;
-          // domImg.style['max-width'] = '100%';
-          // domImg.style.height = 'auto';
           const domDiv = document.createElement('div');
+          domDiv.style.cssText = `animation-delay: ${delay}s; animation-duration: ${speed}s;`;
           domDiv.appendChild(domImg);
           stack.appendChild(domDiv);
         });
@@ -253,8 +288,10 @@ export default {
         }
       }
 
-      for (let index = 0; index < Object.keys(imageSets).length; index += 1) {
-        manipulateDomForStack(index + 1);
+      for (let id = 1; id <= Object.keys(imageSets).length; id += 1) {
+        let delay = (this.pictureDuration - this.transitionSpeed);
+        if (id === 2) delay = Math.floor(delay * 1.2);
+        manipulateDomForStack(id, delay, this.transitionSpeed);
       }
     },
     shuffle(data) {
