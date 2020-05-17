@@ -1,71 +1,33 @@
 <template>
-<v-app style="background: transparent;">
-    <v-overlay v-if="!selectedFiles.length"
-    absolute="absolute"
-    value="overlay"
-  >
-      Welcome to PizPizViz!<br/>
-      Press the 'Z' key for the<br/>
-      menu to get started.
-  </v-overlay>
-  <v-content>
-    <v-container
-      fluid
-      style="margin-top: -12px;"
+  <v-app style="background: transparent;">
+    <v-navigation-drawer
+      v-model="showMenu"
+      absolute
+      temporary
+      style="background: lightblue;"
     >
-      <v-row
-        style="position: relative;"
-        v-for="(_, rowIndex) in phantomRows"
-        :key="rowIndex"
-      >
-        <v-col
-          v-bind:class="[`col-${colCSSMap()}`]"
-          class="stacks-col"
-          style="padding: 0px;"
-          v-for="(_, colIndex) in phantomStacks"
-          :key="colIndex"
-        >
-          <div id="stack1" class="stack"></div>
-        </v-col>
-      </v-row>
-    </v-container>
-  </v-content>
-
-  <v-row
-    v-if="showMenu"
-    style="z-index: 9999;"
-  >
-    <v-col cols=3>
-      <v-list style="background-color: lightcoral;">
+      <v-list dense>
         <v-list-item>
           <v-file-input
             v-model="selectedFiles"
-            placeholder="Upload your pictures"
-            multiple
+            class="ma-2"
+            placeholder="Select pictures"
             prepend-icon="mdi-image"
-            color="#50dfff"
+            multiple
             id="file-selector"
             @change="fileSelected"
           >
-            <template v-slot:selection="{ text }">
-              <v-chip
-                small
-                label
-                color="#ff5088"
-              >
-                {{ text }}
-              </v-chip>
-            </template>
           </v-file-input>
         </v-list-item>
 
         <v-list-item>
           <v-select
             v-model="numOfStacks"
+            class="ma-2"
             :items="numOfStacksOptions"
-            label="Number of stacks"
+            label="Stacks"
+            prepend-icon="mdi-plus-box-multiple"
           >
-            <v-icon slot="prepend" color="#ffba50">mdi-plus-box</v-icon>
           </v-select>
         </v-list-item>
 
@@ -73,10 +35,9 @@
           <v-text-field
             v-model="pictureDuration"
             class="ma-2"
-            color="#ffba50"
             label="Duration (seconds)"
+            prepend-icon="mdi-timer-sand"
           >
-            <v-icon slot="prepend" color="#ffba50">mdi-clock</v-icon>
           </v-text-field>
         </v-list-item>
 
@@ -84,16 +45,44 @@
           <v-text-field
             v-model="transitionSpeed"
             class="ma-2"
-            color="#ffba50"
             label="Transition (seconds)"
+            prepend-icon="mdi-timer"
           >
-            <v-icon slot="prepend" color="#ffba50">mdi-clock</v-icon>
           </v-text-field>
         </v-list-item>
+
+        <v-list-item
+          class="ma-2 font-weight-thin"
+        >
+          'Z': show/hide menu
+          <br/>
+          'Ctrl-F': fullscreen
+        </v-list-item>
       </v-list>
-    </v-col>
-  </v-row>
-</v-app>
+    </v-navigation-drawer>
+
+    <v-content>
+      <v-container
+        fluid
+        style="margin-top: -12px;"
+      >
+        <v-row
+          v-for="(_, rowIndex) in phantomRows"
+          :key="rowIndex"
+          no-gutters
+        >
+          <v-col
+            v-bind:class="[`col-${colCSSMap()}`]"
+            style="padding: 0px;"
+            v-for="(_, colIndex) in phantomStacks"
+            :key="colIndex"
+          >
+            <div class="stack"></div>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-content>
+  </v-app>
 </template>
 
 <style>
@@ -165,7 +154,7 @@ export default {
   data: () => ({
     numOfStacks: 1,
     numOfStacksOptions: [1, 2, 4, 9],
-    showMenu: false,
+    showMenu: true,
     selectedFiles: [],
     pictureDuration: 10,
     transitionSpeed: 3,
