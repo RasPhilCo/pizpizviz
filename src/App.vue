@@ -14,22 +14,18 @@
       style="margin-top: -12px;"
     >
       <v-row
-        style="position:relative;"
+        style="position: relative;"
+        v-for="(_, rowIndex) in phantomRows"
+        :key="rowIndex"
       >
         <v-col
-          v-bind:class="[multiStacks ? 'col-6' : 'col-12']"
+          v-bind:class="[`col-${colCSSMap()}`]"
           class="stacks-col"
           style="padding: 0px;"
+          v-for="(_, colIndex) in phantomStacks"
+          :key="colIndex"
         >
-          <div id="stack1"></div>
-        </v-col>
-        <v-col
-          cols="6"
-          class="stacks-col"
-          style="padding: 0px;"
-          v-if="multiStacks"
-        >
-          <div id="stack2"></div>
+          <div id="stack1" class="stack"></div>
         </v-col>
       </v-row>
     </v-container>
@@ -64,13 +60,13 @@
         </v-list-item>
 
         <v-list-item>
-          <v-switch
-            v-model="multiStacks"
-            class="ma-2"
-            color="#ffba50"
-            label="Display multi-stacks"
+          <v-select
+            v-model="numOfStacks"
+            :items="numOfStacksOptions"
+            label="Number of stacks"
           >
-          </v-switch>
+            <v-icon slot="prepend" color="#ffba50">mdi-plus-box</v-icon>
+          </v-select>
         </v-list-item>
 
         <v-list-item>
@@ -103,19 +99,18 @@
 <style>
   body {
     background: black;
-    position: relative
   }
 
   .container {
     padding: 0px;
   }
 
-  /*  BEGIN STACK 1 */
-  #stack1 {
+  /*  BEGIN STACK */
+  .stack {
     position: relative;
   }
 
-  #stack1 div {
+  .stack div {
     position: absolute;
     display: flex;
     height: 100vh;
@@ -124,69 +119,32 @@
     align-items: center;
   }
 
-  #stack1 img {
+  .stack img {
     display: block;
     max-width:100%;
     max-height:100%;
   }
 
-  #stack1 div:nth-of-type(1) {
+  .stack div:nth-of-type(1) {
     animation-name: fadeOut;
     animation-delay: 6s;
     animation-duration: 3s;
-    z-index: 20;
+    z-index: 2;
   }
 
-  #stack1 div:nth-of-type(2) {
-    z-index: 10;
+  .stack div:nth-of-type(2) {
+    z-index: 1;
     animation-name: fadeIn;
     animation-delay: 6s;
     animation-duration: 3s;
     opacity: 0.0;
   }
 
-  #stack1 div:nth-of-type(n+3) {
+  .stack div:nth-of-type(n+3) {
     display: none;
   }
 
   /*  BEGIN STACK 2 */
-  #stack2 {
-    position: relative;
-  }
-
-  #stack2 div {
-    position: absolute;
-    display: flex;
-    height: 100vh;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-  }
-
-  #stack2 img {
-    display: block;
-    max-width:100%;
-    max-height:100%;
-  }
-
-  #stack2 div:nth-of-type(1) {
-    animation-name: fadeOut;
-    animation-delay: 7s;
-    animation-duration: 3s;
-    z-index: 20;
-  }
-
-  #stack2 div:nth-of-type(2) {
-    z-index: 10;
-    animation-name: fadeIn;
-    animation-delay: 7s;
-    animation-duration: 3s;
-    opacity: 0.0;
-  }
-
-  #stack2 div:nth-of-type(n+3) {
-    display: none;
-  }
 
   /* SHARED */
 
@@ -205,13 +163,28 @@
 <script>
 export default {
   data: () => ({
+    numOfStacks: 1,
+    numOfStacksOptions: [1, 2, 4, 9],
     showMenu: false,
     selectedFiles: [],
-    multiStacks: false,
     pictureDuration: 10,
     transitionSpeed: 3,
   }),
   computed: {
+    phantomStacks() {
+      const stacks = [];
+      for (let index = 0; index < this.colMap(); index += 1) {
+        stacks.push(index);
+      }
+      return stacks;
+    },
+    phantomRows() {
+      const rows = [];
+      for (let index = 0; index < this.rowMap(); index += 1) {
+        rows.push(index);
+      }
+      return rows;
+    },
   },
   mounted() {
     window.addEventListener('keyup', (event) => {
@@ -227,6 +200,12 @@ export default {
     });
   },
   watch: {
+    numOfStacks() {
+      setTimeout(() => {
+        this.resetStacks();
+        this.buildStacks();
+      }, 500);
+    },
     multiStacks() {
       setTimeout(() => {
         this.resetStacks();
@@ -247,6 +226,31 @@ export default {
     },
   },
   methods: {
+    rowMap() {
+      const i = Number(this.numOfStacks);
+      if (i === 4) return 2;
+      if (i === 9) return 3;
+      return 1;
+    },
+    colMap() {
+      const i = Number(this.numOfStacks);
+      if (i === 2) return 2;
+      if (i === 4) return 2;
+      if (i === 9) return 3;
+      return 1;
+    },
+    colCSSMap() {
+      const i = Number(this.numOfStacks);
+      if (i === 2) return 6;
+      if (i === 4) return 6;
+      if (i === 9) return 4;
+      return 12;
+    },
+    heightMap() {
+      if (this.rowMap() === 2) return 50;
+      if (this.rowMap() === 3) return 33.3;
+      return 100;
+    },
     fileSelected(selected) {
       this.selectedFiles = selected;
       this.resetStacks();
@@ -254,28 +258,29 @@ export default {
     },
     resetStacks() {
       // reset stacks
-      const stack1 = document.getElementById('stack1');
-      if (stack1) stack1.innerHTML = '';
-      const stack2 = document.getElementById('stack2');
-      if (stack2) stack2.innerHTML = '';
+      const stack = document.getElementsByClassName('stack');
+      stack.forEach((s) => {
+        // eslint-disable-next-line no-param-reassign
+        s.innerHTML = '';
+      });
     },
     buildStacks() {
       const fileUrls = this.selectedFiles.map((f) => URL.createObjectURL(f));
       const imageSets = {};
-      const numOfStacks = this.multiStacks ? 2 : 1;
-      this.chunkArray(this.shuffle(fileUrls), (fileUrls.length / numOfStacks))
-        .forEach((s, idx) => { imageSets[idx + 1] = s; });
+      this.chunkArray(this.shuffle(fileUrls), (fileUrls.length / this.numOfStacks))
+        .forEach((s, idx) => { imageSets[idx] = s; });
 
       console.dir('Audit stacks...');
       console.dir(`Num of stacks: ${Object.keys(imageSets).length}`);
 
-      function manipulateDomForStack(id, delay, speed) {
-        const stack = document.getElementById(`stack${id}`);
+      function manipulateDomForStack(id, delay, speed, height) {
+        const stack = document.getElementsByClassName('stack')[id];
+        stack.style.cssText = `height: ${height}vh;`;
         imageSets[id].forEach((imgSrc) => {
           const domImg = document.createElement('img');
           domImg.src = imgSrc;
           const domDiv = document.createElement('div');
-          domDiv.style.cssText = `animation-delay: ${delay}s; animation-duration: ${speed}s;`;
+          domDiv.style.cssText = `animation-delay: ${delay}s; animation-duration: ${speed}s; height: ${height}vh;`;
           domDiv.appendChild(domImg);
           stack.appendChild(domDiv);
         });
@@ -288,10 +293,10 @@ export default {
         }
       }
 
-      for (let id = 1; id <= Object.keys(imageSets).length; id += 1) {
+      for (let id = 0; id < Object.keys(imageSets).length; id += 1) {
         let delay = (this.pictureDuration - this.transitionSpeed);
-        if (id === 2) delay = Math.floor(delay * 1.2);
-        manipulateDomForStack(id, delay, this.transitionSpeed);
+        if (id >= 1) delay = Math.floor((delay + id) * 1.2);
+        manipulateDomForStack(id, delay, this.transitionSpeed, this.heightMap());
       }
     },
     shuffle(data) {
