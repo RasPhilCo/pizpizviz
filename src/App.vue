@@ -110,8 +110,8 @@
 
   .stack img {
     display: block;
-    max-width:100%;
-    max-height:100%;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   .stack div:nth-of-type(1) {
@@ -126,14 +126,12 @@
     animation-name: fadeIn;
     animation-delay: 6s;
     animation-duration: 3s;
-    opacity: 0.0;
+    opacity: 0;
   }
 
   .stack div:nth-of-type(n+3) {
     display: none;
   }
-
-  /*  BEGIN STACK 2 */
 
   /* SHARED */
 
@@ -146,7 +144,6 @@
     from { opacity: 0.0; }
     to   { opacity: 1.0; }
   }
-
 </style>
 
 <script>
@@ -256,8 +253,12 @@ export default {
     buildStacks() {
       const fileUrls = this.selectedFiles.map((f) => URL.createObjectURL(f));
       const imageSets = {};
-      this.chunkArray(this.shuffle(fileUrls), (fileUrls.length / this.numOfStacks))
-        .forEach((s, idx) => { imageSets[idx] = s; });
+      this.chunkArray(
+        this.shuffle(fileUrls),
+        fileUrls.length / this.numOfStacks,
+      ).forEach((s, idx) => {
+        imageSets[idx] = s;
+      });
 
       console.dir('Audit stacks...');
       console.dir(`Num of stacks: ${Object.keys(imageSets).length}`);
@@ -283,15 +284,21 @@ export default {
       }
 
       for (let id = 0; id < Object.keys(imageSets).length; id += 1) {
-        let delay = (this.pictureDuration - this.transitionSpeed);
+        let delay = this.pictureDuration - this.transitionSpeed;
         if (id >= 1) delay = Math.floor((delay + id) * 1.2);
-        manipulateDomForStack(id, delay, this.transitionSpeed, this.heightMap());
+        manipulateDomForStack(
+          id,
+          delay,
+          this.transitionSpeed,
+          this.heightMap(),
+        );
       }
     },
     shuffle(data) {
       const a = data;
-      let j; let x; let
-        i;
+      let j;
+      let x;
+      let i;
       for (i = a.length - 1; i > 0; i -= 1) {
         j = Math.floor(Math.random() * (i + 1));
         x = a[i];
